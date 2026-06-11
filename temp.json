@@ -1,0 +1,186 @@
+{
+    "cells": [
+        {
+            "cell_type": "markdown",
+            "id": "ef8301be",
+            "metadata": {},
+            "source": [
+                "pip install transformers "
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": 3,
+            "id": "7b91235d",
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "import torch\n",
+                "from transformers import AutoTokenizer, AutoModelForSeq2SeqLM\n",
+                "\n"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "id": "019acc68",
+            "metadata": {},
+            "source": [
+                "check if cuda is available otherwise use cpu"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": 4,
+            "id": "063c699e",
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "id": "c2b52912",
+            "metadata": {},
+            "source": [
+                "Choose pretrained model \"Helsinki-NLP/opus-mt-sv-en\""
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": 12,
+            "id": "8fc7b1e5",
+            "metadata": {},
+            "outputs": [
+                {
+                    "data": {
+                        "application/vnd.jupyter.widget-view+json": {
+                            "model_id": "8dcf8580131f49edaac3c3fe185ba81b",
+                            "version_major": 2,
+                            "version_minor": 0
+                        },
+                        "text/plain": [
+                            "Loading weights:   0%|          | 0/258 [00:00<?, ?it/s]"
+                        ]
+                    },
+                    "metadata": {},
+                    "output_type": "display_data"
+                }
+            ],
+            "source": [
+                "model_name = \"Helsinki-NLP/opus-mt-sv-en\"\n",
+                "\n",
+                "tokenizer = AutoTokenizer.from_pretrained(model_name) # down load a tokenizer for the helsinki model\n",
+                "model = AutoModelForSeq2SeqLM.from_pretrained(model_name)\n",
+                "\n",
+                "model = model.to(device)\n",
+                "\n",
+                "\n",
+                "\n"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "id": "88abc6b1",
+            "metadata": {},
+            "source": [
+                "Translate function from sv to en\n"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": 23,
+            "id": "fa226870",
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "def translate_sv_to_en(sentences: list[str]) -> list[str]:\n",
+                "    inputs = tokenizer(\n",
+                "        sentences,\n",
+                "        return_tensors=\"pt\", # return pytorch tensors\n",
+                "        padding=True,\n",
+                "        truncation=True\n",
+                "    ).to(device)\n",
+                "\n",
+                "    with torch.no_grad():\n",
+                "        output_ids = model.generate(\n",
+                "            **inputs,\n",
+                "            max_new_tokens=50\n",
+                "        )\n",
+                "\n",
+                "    translation = tokenizer.decode(\n",
+                "        output_ids,\n",
+                "        skip_special_tokens=True\n",
+                "    )\n",
+                "\n",
+                "    return translation"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "id": "56bf6675",
+            "metadata": {},
+            "source": [
+                "Test the model"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": 24,
+            "id": "fca910b6",
+            "metadata": {},
+            "outputs": [
+                {
+                    "name": "stderr",
+                    "output_type": "stream",
+                    "text": [
+                        "[transformers] Both `max_new_tokens` (=50) and `max_length`(=512) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)\n"
+                    ]
+                },
+                {
+                    "name": "stdout",
+                    "output_type": "stream",
+                    "text": [
+                        "I like machine learning.\n",
+                        "How are you today?\n",
+                        "This is a little test.\n",
+                        "I'm studying computer science.\n"
+                    ]
+                }
+            ],
+            "source": [
+                "model.eval()\n",
+                "sentences = [\n",
+                "    \"Jag gillar maskininl\u00e4rning.\",\n",
+                "    \"Hur m\u00e5r du idag?\",\n",
+                "    \"Det h\u00e4r \u00e4r ett litet test.\",\n",
+                "    \"Jag studerar datavetenskap.\"\n",
+                "]\n",
+                "translations=translate_sv_to_en(sentences)\n",
+                "for i in translations:\n",
+                "    print(i)"
+            ]
+        }
+    ],
+    "metadata": {
+        "kernelspec": {
+            "display_name": "Python 3",
+            "language": "python",
+            "name": "python3"
+        },
+        "language_info": {
+            "codemirror_mode": {
+                "name": "ipython",
+                "version": 3
+            },
+            "file_extension": ".py",
+            "mimetype": "text/x-python",
+            "name": "python",
+            "nbconvert_exporter": "python",
+            "pygments_lexer": "ipython3",
+            "version": "3.12.6"
+        }
+    },
+    "nbformat": 4,
+    "nbformat_minor": 5
+}
